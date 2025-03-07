@@ -23,9 +23,11 @@ from importlib import metadata
 import math
 from fastapi import FastAPI, Request, Depends
 from fastapi.responses import Response, HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, PackageLoader
 from pydantic import PositiveInt
+
 
 from npg_porch.db.connection import get_DbAccessor
 from npg_porch.endpoints import pipelines, tasks
@@ -56,6 +58,11 @@ app.include_router(tasks.router)
 
 env = Environment(loader=PackageLoader("npg_porch", "templates"))
 templates = Jinja2Templates(env=env)
+app.mount(
+    "/static",
+    StaticFiles(packages=[("npg_porch", "static")]),
+    name="static",
+)
 
 version = metadata.version("npg_porch")
 
