@@ -23,6 +23,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 
 from .base import Base
+from npg_porch.models.event import LatestEvent as ModelledLatestEvent
 
 
 class Event(Base):
@@ -42,3 +43,19 @@ class Event(Base):
 
     # Consider adding 'order_by=Token.token_id'
     token = relationship("Token", back_populates="events")
+
+
+class LatestEvent(Base):
+    """
+    A model representing a view containing the most recent event for each Task.
+    """
+
+    __tablename__ = "latest_event"
+
+    task_id = Column(Integer, ForeignKey("task.task_id"), primary_key=True)
+    status_date = Column(DateTime)
+
+    task = relationship("Task")
+
+    def convert_to_model(self) -> ModelledLatestEvent:
+        return ModelledLatestEvent(status_date=self.status_date)

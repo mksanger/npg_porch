@@ -24,9 +24,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import contains_eager, joinedload
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.sql.functions import count, max as samax
+from sqlalchemy.sql.functions import count
 
-from npg_porch.db.models import Event
+from npg_porch.db.models import Event, LatestEvent
 from npg_porch.db.models import Pipeline as DbPipeline
 from npg_porch.db.models import Task as DbTask
 from npg_porch.db.models import Token as DbToken
@@ -238,25 +238,16 @@ class AsyncDbAccessor:
         Gets information about tasks including their creation date, ordered
         by their most recent status update.
         """
-        latest_event = (
-            select(samax(Event.time).label("status_date"), Event.task_id)
-            .select_from(Event)
-            .group_by(Event.task_id)
-            .subquery()
-        )
         query = (
-            select(DbTask, latest_event.c.status_date)
+            select(DbTask)
             .select_from(DbTask)
-            .join(latest_event, DbTask.task_id == latest_event.c.task_id)
-            .options(joinedload(DbTask.pipeline))
-            .order_by(latest_event.c.status_date.desc())
+            .options(joinedload(DbTask.pipeline), joinedload(DbTask.latest_event))
         )
 
         self.logger.debug(query.compile())
         task_result = await self.session.execute(query)
-        return [
-            t.Task.convert_to_model(TaskExpanded, t.status_date) for t in task_result
-        ]
+        tasks = task_result.unique().scalars().all()
+        return [t.convert_to_model(TaskExpanded) for t in tasks]
 
     async def count_tasks(self) -> int:
         query = select(count()).select_from(DbTask)

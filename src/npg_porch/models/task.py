@@ -23,6 +23,7 @@ import hashlib
 import ujson
 from pydantic import BaseModel, Field, ValidationError
 
+from npg_porch.models.event import LatestEvent
 from npg_porch.models.pipeline import Pipeline
 
 
@@ -102,15 +103,11 @@ class TaskExpanded(Task):
     Dates are formatted to improve human readability.
     """
 
+    latest_event: LatestEvent
     created: datetime = Field(
         default=None,
         title="Task Created",
         description="The timestamp of task creation",
-    )
-    updated: datetime = Field(
-        default=None,
-        title="Task Status Updated",
-        description="The timestamp of task status update",
     )
 
     class Config:

@@ -67,11 +67,11 @@ class Task(Base):
 
     pipeline = relationship("Pipeline", back_populates="tasks")
     events = relationship("Event", back_populates="task")
+    latest_event = relationship("LatestEvent", back_populates="task")
 
     def convert_to_model(
         self,
         task_class: type[ModelledTask | ModelledTaskExpanded] = ModelledTask,
-        updated: datetime = None,
     ) -> ModelledTask | ModelledTaskExpanded:
         init_args = {
             "pipeline": self.pipeline.convert_to_model(),
@@ -81,5 +81,6 @@ class Task(Base):
         }
         if task_class == ModelledTaskExpanded:
             init_args["created"] = self.created
-            init_args["updated"] = updated
+            # There will only be one row per task in the view, but sqlalchemy does not know this
+            init_args["latest_event"] = self.latest_event[0].convert_to_model()
         return task_class(**init_args)
