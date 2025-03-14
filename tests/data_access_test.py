@@ -332,7 +332,7 @@ async def test_get_expanded_tasks(db_accessor):
 
     assert len(expanded_tasks) == 5, "Gets tasks from new pipeline as well"
     assert (
-        expanded_tasks[0].created == expanded_tasks[0].updated
+        expanded_tasks[0].created == expanded_tasks[0].latest_event.status_date
     ), "Creation date is the same as status update date"
 
     time.sleep(1)  # Delay to ensure a difference in time stamp
@@ -350,7 +350,7 @@ async def test_get_expanded_tasks(db_accessor):
     assert len(expanded_tasks) == 5, "Updating a task does not change number of results"
     # ordered by updated date, so this should always be the task that was updated
     assert (
-        expanded_tasks[0].created < expanded_tasks[0].updated
+        expanded_tasks[0].created < expanded_tasks[0].latest_event.status_date
     ), "Status update date is more recent than creation date"
 
 

@@ -242,6 +242,7 @@ class AsyncDbAccessor:
             select(DbTask)
             .select_from(DbTask)
             .options(joinedload(DbTask.pipeline), joinedload(DbTask.latest_event))
+            .order_by("status_date")
         )
 
         self.logger.debug(query.compile())

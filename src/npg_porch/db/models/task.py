@@ -67,7 +67,7 @@ class Task(Base):
 
     pipeline = relationship("Pipeline", back_populates="tasks")
     events = relationship("Event", back_populates="task")
-    latest_event = relationship("LatestEvent", back_populates="task")
+    latest_event = relationship("LatestEvent")
 
     def convert_to_model(
         self,
