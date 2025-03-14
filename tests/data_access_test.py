@@ -2,7 +2,10 @@ import re
 import time
 
 import pytest
+from sqlalchemy import select
+
 from npg_porch.db.data_access import AsyncDbAccessor
+from npg_porch.db.models import LatestEvent
 from npg_porch.models import Pipeline as ModelledPipeline
 from npg_porch.models import Task, TaskStateEnum
 from pydantic import ValidationError
@@ -351,7 +354,7 @@ async def test_get_expanded_tasks(db_accessor):
     # ordered by updated date, so this should always be the task that was updated
     assert (
         expanded_tasks[0].created < expanded_tasks[0].latest_event.status_date
-    ), "Status update date is more recent than creation date"
+    ), f"Status update date is more recent than creation date "
 
 
 @pytest.mark.asyncio

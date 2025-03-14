@@ -20,7 +20,7 @@
 
 import logging
 
-from sqlalchemy import select
+from sqlalchemy import select, desc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import contains_eager, joinedload
 from sqlalchemy.orm.exc import NoResultFound
@@ -241,8 +241,9 @@ class AsyncDbAccessor:
         query = (
             select(DbTask)
             .select_from(DbTask)
-            .options(joinedload(DbTask.pipeline), joinedload(DbTask.latest_event))
-            .order_by("status_date")
+            .join(DbTask.latest_event)
+            .options(joinedload(DbTask.pipeline), contains_eager(DbTask.latest_event))
+            .order_by(LatestEvent.status_date.desc())
         )
 
         self.logger.debug(query.compile())

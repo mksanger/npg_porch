@@ -55,7 +55,5 @@ class LatestEvent(Base):
     task_id = Column(Integer, ForeignKey("task.task_id"), primary_key=True)
     status_date = Column(DateTime)
 
-    task = relationship("Task")
-
     def convert_to_model(self) -> ModelledLatestEvent:
         return ModelledLatestEvent(status_date=self.status_date)
