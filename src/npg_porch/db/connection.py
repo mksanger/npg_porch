@@ -19,6 +19,8 @@
 # this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+
+from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
@@ -85,7 +87,20 @@ async def get_CredentialsValidator():
 
 async def deploy_schema():
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(
+            Base.metadata.create_all,
+            tables=[
+                table
+                for name, table in Base.metadata.tables.items()
+                if name != "latest_event"
+            ],
+        )
+        await conn.execute(
+            text(
+                "CREATE VIEW latest_event AS SELECT max(event.time) AS "
+                "status_date, event.task_id AS task_id FROM event GROUP BY event.task_id;"
+            )
+        )
 
 
 async def close_engine():

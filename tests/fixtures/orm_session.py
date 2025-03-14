@@ -3,6 +3,7 @@ import pytest
 import pytest_asyncio
 import sqlalchemy
 import sqlalchemy.orm
+from sqlalchemy import text
 
 from npg_porch.db.models import Base
 from npg_porch.db.connection import session_factory, deploy_schema, close_engine
@@ -17,7 +18,22 @@ def sync_session():
 
     sqlite_url = "sqlite+pysqlite:///:memory:"
     engine = sqlalchemy.create_engine(sqlite_url)
-    Base.metadata.create_all(engine)
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            table
+            for name, table in Base.metadata.tables.items()
+            if name != "latest_event"
+        ],
+    )
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "CREATE VIEW latest_event AS SELECT max(event.time) AS "
+                "status_date, event.task_id AS task_id FROM event GROUP BY event.task_id;"
+            )
+        )
     SessionFactory = sqlalchemy.orm.sessionmaker(bind=engine)
     sess = sqlalchemy.orm.scoped_session(SessionFactory)
     yield sess
