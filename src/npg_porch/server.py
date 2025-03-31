@@ -19,12 +19,12 @@
 # this program. If not, see <http://www.gnu.org/licenses/>.
 
 from importlib import metadata
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, PackageLoader
 
-
+from npg_porch.db.connection import get_DbAccessor
 from npg_porch.endpoints import pipelines, tasks, ui
 
 # https://fastapi.tiangolo.com/tutorial/bigger-applications/
@@ -63,16 +63,27 @@ version = metadata.version("npg_porch")
     tags=["index"],
     summary="Web page with listing of all Porch tasks.",
 )
-async def root(request: Request) -> HTMLResponse:
+async def root(request: Request, db_accessor=Depends(get_DbAccessor)) -> HTMLResponse:
+    pipeline_list = await db_accessor.get_all_pipelines()
     return templates.TemplateResponse(
         "listing.j2",
         {
             "endpoint": "/ui/tasks",
-            "heading": "All",
+            "pipeline_name": "All",
+            "pipelines": pipeline_list,
             "request": request,
             "version": version,
         },
     )
+
+
+@app.get(
+    "/form_redirect",
+    response_class=RedirectResponse,
+    summary="Redirect to deal with form input",
+)
+async def form_redirect(pipeline_name: str) -> RedirectResponse:
+    return RedirectResponse(f"/pipeline/{pipeline_name}")
 
 
 @app.get(
@@ -82,12 +93,16 @@ async def root(request: Request) -> HTMLResponse:
     tags=["pipeline"],
     summary="Web page with listing of porch tasks for specified pipeline.",
 )
-async def pipeline(request: Request, pipeline_name: str) -> HTMLResponse:
+async def pipeline(
+    request: Request, pipeline_name: str, db_accessor=Depends(get_DbAccessor)
+) -> HTMLResponse:
+    pipeline_list = await db_accessor.get_all_pipelines()
     return templates.TemplateResponse(
         "listing.j2",
         {
             "endpoint": f"/ui/tasks/{ pipeline_name }",
-            "heading": pipeline_name,
+            "pipeline_name": pipeline_name,
+            "pipelines": pipeline_list,
             "request": request,
             "version": version,
         },
@@ -96,7 +111,7 @@ async def pipeline(request: Request, pipeline_name: str) -> HTMLResponse:
 
 # Redirect intermediate path
 @app.get("/pipeline", response_class=RedirectResponse)
-async def pipeline_redirect(request: Request) -> RedirectResponse:
+async def pipeline_redirect() -> RedirectResponse:
     return RedirectResponse("/")
 
 
@@ -106,7 +121,8 @@ async def pipeline_redirect(request: Request) -> RedirectResponse:
     tags=["about"],
     summary="Web page with links to OpenAPI documentation.",
 )
-async def about(request: Request) -> HTMLResponse:
+async def about(request: Request, db_accessor=Depends(get_DbAccessor)) -> HTMLResponse:
+    pipeline_list = await db_accessor.get_all_pipelines()
     return templates.TemplateResponse(
-        "about.j2", {"request": request, "version": version}
+        "about.j2", {"pipelines": pipeline_list, "request": request, "version": version}
     )
