@@ -60,12 +60,32 @@ version = metadata.version("npg_porch")
     "/",
     response_class=HTMLResponse,
     tags=["index"],
-    summary="Web page with listing of Porch tasks.",
+    summary="Web page with listing of all Porch tasks.",
 )
 async def root(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
-        "index.j2",
+        "listing.j2",
         {
+            "endpoint": "/ui/tasks",
+            "heading": "All",
+            "request": request,
+            "version": version,
+        },
+    )
+
+
+@app.get(
+    "/{pipeline_name}",
+    response_class=HTMLResponse,
+    tags=["pipeline"],
+    summary="Web page with listing of porch tasks for specified pipeline.",
+)
+async def pipeline(request: Request, pipeline_name: str) -> HTMLResponse:
+    return templates.TemplateResponse(
+        "listing.j2",
+        {
+            "endpoint": f"/ui/tasks/{ pipeline_name }",
+            "heading": pipeline_name,
             "request": request,
             "version": version,
         },

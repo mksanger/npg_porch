@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/2.2.2/css/dataTables.dataTables.min.css">
   </head>
   <body>
-    <h3>Porch Tasks</h3>
+    <h3>Porch Tasks - {{ heading }}</h3>
     <table class="table" id="tasks">
       <thead>
         <tr>
@@ -24,7 +24,7 @@
     <script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
     <script>
       new DataTable('#tasks', {
-        ajax: '/ui/tasks/',
+        ajax: '{{ endpoint }}',
         processing: true,
         columns: [
           { data: 'pipeline.name' },
