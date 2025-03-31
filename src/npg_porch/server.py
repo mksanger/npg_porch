@@ -20,9 +20,10 @@
 
 from importlib import metadata
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, PackageLoader
+
 
 from npg_porch.endpoints import pipelines, tasks, ui
 
@@ -75,7 +76,8 @@ async def root(request: Request) -> HTMLResponse:
 
 
 @app.get(
-    "/{pipeline_name}",
+    # Needs intermediate path to prevent interference with other paths
+    "/pipeline/{pipeline_name}",
     response_class=HTMLResponse,
     tags=["pipeline"],
     summary="Web page with listing of porch tasks for specified pipeline.",
@@ -90,6 +92,12 @@ async def pipeline(request: Request, pipeline_name: str) -> HTMLResponse:
             "version": version,
         },
     )
+
+
+# Redirect intermediate path
+@app.get("/pipeline", response_class=RedirectResponse)
+async def pipeline_redirect(request: Request) -> RedirectResponse:
+    return RedirectResponse("/")
 
 
 @app.get(
