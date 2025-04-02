@@ -34,6 +34,7 @@
     </table>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/plug-ins/2.2.2/features/scrollResize/dataTables.scrollResize.min.js"></script>
     <script>
       new DataTable('#tasks', {
         ajax: '{{ endpoint }}',
@@ -49,7 +50,10 @@
           { data: 'status' },
           { data: 'updated' },
           { data: 'created' }
-        ]
+        ],
+        scrollResize: true,
+        scrollY: 100px,
+        scrollCollapse: true
       })
     </script>
     <div class="text-center">Copyright Genome Research Ltd 2025 - version: {{ version }} - <a href="/about">about</a></div>
