@@ -33,6 +33,8 @@ from npg_porch.db.models import Token as DbToken
 from npg_porch.models import Pipeline, Task, TaskStateEnum, TaskExpanded
 from npg_porch.models.token import Token
 
+old_pipelines = ["Test Pipeline 1", "Snakemake_Cardinal"]
+
 
 class AsyncDbAccessor:
     """
@@ -61,7 +63,7 @@ class AsyncDbAccessor:
         version: str | None = None,
         uri: str | None = None,
     ) -> list[Pipeline]:
-        query = select(DbPipeline)
+        query = select(DbPipeline).order_by(DbPipeline.name)
         if name:
             query = query.filter_by(name=name)
         if version:
@@ -77,6 +79,13 @@ class AsyncDbAccessor:
     ) -> list[Pipeline]:
         pipelines = await self._get_pipeline_db_objects(uri=uri, version=version)
         return [pipe.convert_to_model() for pipe in pipelines]
+
+    async def get_recent_pipelines(self):
+        return [
+            p
+            for p in await self._get_pipeline_db_objects()
+            if p.name not in old_pipelines
+        ]
 
     async def create_pipeline(self, pipeline: Pipeline) -> Pipeline:
         session = self.session
