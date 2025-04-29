@@ -10,7 +10,7 @@
     <script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
   </head>
   <body>
-    <h3>Porch Tasks - {{ pipeline_name if pipeline_name else "All" }}</h3>
+    <h3 id="heading">Porch Tasks - {{ pipeline_name if pipeline_name else "All" }}</h3>
     <form method="get" action="/" class="px-3" id="selection_form">
       <label for="pipeline_selection">Pipeline Selection:</label>
       <select class="form-select" name="pipeline_name" id="pipeline_selection">
@@ -34,7 +34,12 @@
         </tr>
       </thead>
     </table>
+    <div class="text-center" id="footer">Copyright Genome Research Ltd. 2025 - version: {{ version }} - <a href="/about">about</a></div>
     <script>
+      var heading_height = document.getElementById('heading').offsetHeight;
+      var form_height = document.getElementById('selection_form').offsetHeight;
+      var footer_height = document.getElementById('footer').offsetHeight;
+      var table_height = Math.max(window.innerHeight - heading_height - form_height - footer_height - 200, 200);
       new DataTable('#tasks', {
         ajax: '{{ endpoint }}',
         processing: true,
@@ -50,9 +55,9 @@
           { data: 'updated' },
           { data: 'created' }
         ],
-        order: [[4, 'desc' ]]
+        order: [[4, 'desc' ]],
+        scrollY: table_height
       })
     </script>
-    <div class="text-center">Copyright Genome Research Ltd. 2025 - version: {{ version }} - <a href="/about">about</a></div>
   </body>
 </html>
