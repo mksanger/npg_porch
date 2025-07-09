@@ -41,11 +41,12 @@
               </select>
               <button type="submit" class="btn btn-primary">Filter</button>
             </div>
-          </form>
+            </form>
         </div>
         <div class="col-md-6">
-          <a class="btn btn-primary {{ "d-none" if pipeline_name != "Long Running"}}" role="button" href="/">All Tasks</a>
-          <a class="btn btn-primary {{ "d-none" if pipeline_name == "Long Running"}}" role="button" href="/long_running">Long Running</a>
+          <a class="btn btn-primary {{ "d-none" if pipeline_name != ("Long Running" or "Recently Failed") }}" role="button" href="/">All Tasks</a>
+          <a class="btn btn-primary {{ "d-none" if pipeline_name == "Long Running" }}" role="button" href="/long_running">Long Running</a>
+          <a class="btn btn-primary {{ "d-none" if pipeline_name == "Recently Failed" }}" role="button" href="/recently_failed">Recently Failed</a>
         </div>
       </div>
 

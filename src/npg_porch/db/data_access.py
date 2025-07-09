@@ -19,7 +19,7 @@
 # this program. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from statistics import mean, stdev
 
 from sqlalchemy import select, or_
@@ -36,6 +36,7 @@ from npg_porch.models import Pipeline, Task, TaskStateEnum, TaskExpanded
 from npg_porch.models.token import Token
 
 old_pipelines = ["Test pipeline 1", "Snakemake_Cardinal"]
+recent = datetime.now() - timedelta(days=14)
 
 
 class AsyncDbAccessor:
@@ -249,7 +250,10 @@ class AsyncDbAccessor:
         return [t.convert_to_model() for t in tasks]
 
     async def get_expanded_tasks(
-        self, pipeline_name: str = None, status: list[TaskStateEnum] = None
+        self,
+        pipeline_name: str = None,
+        status: list[TaskStateEnum] = None,
+        changed_since: datetime = None,
     ) -> list[TaskExpanded]:
         """
         Gets information about tasks including their creation date, ordered
@@ -276,6 +280,8 @@ class AsyncDbAccessor:
             query = query.where(DbPipeline.name == pipeline_name)
         if status:
             query = query.where(or_(DbTask.state == state for state in status))
+        if changed_since:
+            query = query.where(latest_event.c.status_date >= changed_since)
 
         self.logger.debug(query.compile())
         task_result = await self.session.execute(query)

@@ -8,20 +8,14 @@ from npg_porch.models import Pipeline, Task, TaskStateEnum
 client = TestClient(app)
 
 
-def test_get_ui_tasks(async_minimum):
-    response = client.get("/ui/tasks")
-    assert response.status_code == 200
-    assert response.json()["recordsTotal"] == 2
-
-
 @pytest.mark.asyncio
-async def test_get_ui_pipeline_tasks(db_accessor):
+async def test_get_ui_tasks(db_accessor):
     modelled_pipeline = Pipeline(
         name="test_pipeline", version="1.0", uri="file://test.pipeline"
     )
     pipeline = await db_accessor.create_pipeline(modelled_pipeline)
 
-    response = client.get("/ui/tasks/test_pipeline")
+    response = client.get(f"/ui/tasks/test_pipeline/{ui.UiStateEnum.ALL}/All")
     assert response.json()["recordsTotal"] == 0, "No tasks in new pipeline"
 
     for i in range(3):

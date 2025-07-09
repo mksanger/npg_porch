@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see <http://www.gnu.org/licenses/>.
 import logging
+from datetime import datetime
 from enum import Enum
 from fastapi import APIRouter, Depends, Request
 from starlette import status
@@ -43,44 +44,22 @@ router = APIRouter(
 
 
 @router.get(
-    "/tasks",
-    response_model=dict,
-    summary="Returns all expanded tasks in a displayable format for the ui",
-)
-async def get_ui_tasks(request: Request, db_accessor=Depends(get_DbAccessor)) -> dict:
-    params = request.query_params.get
-    task_list = await db_accessor.get_expanded_tasks()
-    return {"draw": params("draw"), "recordsTotal": len(task_list), "data": task_list}
-
-
-@router.get(
-    "/tasks/{pipeline_name}",
+    "/tasks/{pipeline_name}/{state}/{since}",
     response_model=dict,
     summary="Returns all expanded tasks for the specified pipeline in a "
     "displayable format for the ui",
 )
-async def get_ui_pipeline_tasks(
-    request: Request, pipeline_name: str, db_accessor=Depends(get_DbAccessor)
-) -> dict:
-    params = request.query_params.get
-    task_list = await db_accessor.get_expanded_tasks(pipeline_name)
-    return {"draw": params("draw"), "recordsTotal": len(task_list), "data": task_list}
-
-
-@router.get(
-    "/tasks/{pipeline_name}/{state}",
-    response_model=dict,
-    summary="Returns all expanded tasks for the specified pipeline in a "
-    "displayable format for the ui",
-)
-async def get_ui_pipeline_state_tasks(
+async def get_ui_tasks(
     request: Request,
     pipeline_name: str,
     state: TaskStateEnum | UiStateEnum,
+    since: datetime,
     db_accessor=Depends(get_DbAccessor),
 ) -> dict:
-    pipeline_name = None if pipeline_name == "All" else pipeline_name
     params = request.query_params.get
+    pipeline_name = None if pipeline_name == "All" else pipeline_name
+    state = None if state == UiStateEnum.ALL else state
+    since = None if since == "All" else since
     state = (
         [
             taskstate
@@ -92,7 +71,7 @@ async def get_ui_pipeline_state_tasks(
         if state == UiStateEnum.ALL
         else [state]
     )
-    task_list = await db_accessor.get_expanded_tasks(pipeline_name, state)
+    task_list = await db_accessor.get_expanded_tasks(pipeline_name, state, since)
     return {"draw": params("draw"), "recordsTotal": len(task_list), "data": task_list}
 
 

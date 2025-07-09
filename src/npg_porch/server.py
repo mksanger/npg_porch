@@ -17,6 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see <http://www.gnu.org/licenses/>.
+from datetime import datetime
 from importlib import metadata
 
 from fastapi import FastAPI, Request, Depends
@@ -27,7 +28,6 @@ from fastapi.responses import (
 )
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, PackageLoader
-from typing import Optional
 
 from npg_porch.db.connection import get_DbAccessor
 from npg_porch.endpoints import pipelines, tasks, ui
@@ -76,6 +76,7 @@ async def root(
     request: Request,
     pipeline_name: str = None,
     task_status: ui.UiStateEnum | TaskStateEnum = ui.UiStateEnum.ALL,
+    since: datetime | None = None,
     db_accessor=Depends(get_DbAccessor),
 ) -> Response:
     redirect = False
@@ -104,12 +105,9 @@ async def root(
         )
 
     endpoint = "/ui/tasks"
-    if pipeline_name and task_status:
-        endpoint += f"/{pipeline_name}/{task_status}"
-    elif pipeline_name:
-        endpoint += f"/{pipeline_name}"
-    elif task_status:
-        endpoint += f"/All/{task_status}"
+    endpoint += f"/{pipeline_name}" if pipeline_name else "/All"
+    endpoint += f"/{task_status}" if task_status else f"/{ui.UiStateEnum.ALL}"
+    endpoint += f"/{since}/" if since else "/All/"
 
     return templates.TemplateResponse(
         "listing.j2",
@@ -119,6 +117,7 @@ async def root(
             "task_status": task_status,
             "pipelines": pipeline_list,
             "request": request,
+            "since": since,
             "states": [state for state in ui.UiStateEnum]
             + [state for state in TaskStateEnum],
             "version": version,

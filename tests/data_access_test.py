@@ -1,5 +1,6 @@
 import re
 import time
+from datetime import timedelta, datetime
 
 import pytest
 from npg_porch.db.data_access import AsyncDbAccessor
@@ -350,6 +351,12 @@ async def test_get_expanded_tasks(db_accessor):
             task_input={"number": 1}, pipeline=pipeline, status=TaskStateEnum.DONE
         ),
     )
+
+    expanded_tasks = await db_accessor.get_expanded_tasks(
+        changed_since=datetime.now - timedelta(seconds=1)
+    )
+
+    assert len(expanded_tasks) == 1, "One task has been updated in the last second"
 
     expanded_tasks = await db_accessor.get_expanded_tasks()
 
