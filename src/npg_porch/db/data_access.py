@@ -50,12 +50,21 @@ class AsyncDbAccessor:
         self.logger = logging.getLogger(__name__)
 
     async def get_pipeline_by_name(self, name: str) -> Pipeline:
-        pipeline = await self._get_pipeline_db_object(name)
+        pipeline = await self._get_most_recent_pipeline_version_db_object(name)
         return pipeline.convert_to_model()
 
-    async def _get_pipeline_db_object(self, name: str) -> Pipeline:
+    async def _get_most_recent_pipeline_version_db_object(self, name: str) -> Pipeline:
         pipeline_result = await self.session.execute(
-            select(DbPipeline).filter_by(name=name)
+            select(DbPipeline)
+            .filter_by(name=name)
+            .order_by(DbPipeline.version.desc())
+            .limit(1)
+        )
+        return pipeline_result.scalar_one()
+
+    async def _get_pipeline_db_object(self, name: str, version: str) -> Pipeline:
+        pipeline_result = await self.session.execute(
+            select(DbPipeline).filter_by(name=name, version=version)
         )
         return pipeline_result.scalar_one()  # errors if no rows
 
@@ -107,7 +116,7 @@ class AsyncDbAccessor:
 
     async def create_pipeline_token(self, name: str, desc: str) -> Token:
         session = self.session
-        db_pipeline = await self._get_pipeline_db_object(name)
+        db_pipeline = await self._get_most_recent_pipeline_version_db_object(name)
 
         db_token = DbToken(pipeline=db_pipeline, description=desc)
         session.add(db_token)
@@ -126,7 +135,9 @@ class AsyncDbAccessor:
         """
         self.logger.debug("CREATE TASK: " + str(task))
         session = self.session
-        db_pipeline = await self._get_pipeline_db_object(task.pipeline.name)
+        db_pipeline = await self._get_pipeline_db_object(
+            task.pipeline.name, task.pipeline.version
+        )
 
         task.status = TaskStateEnum.PENDING
         t = self.convert_task_to_db(task, db_pipeline)
@@ -198,7 +209,9 @@ class AsyncDbAccessor:
         session = self.session
         # Get the matching task from the DB
         try:
-            db_pipe = await self._get_pipeline_db_object(task.pipeline.name)
+            db_pipe = await self._get_pipeline_db_object(
+                task.pipeline.name, task.pipeline.version
+            )
         except NoResultFound:
             raise NoResultFound("Pipeline not found")
 

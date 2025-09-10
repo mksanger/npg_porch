@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see <http://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from .base import Base
@@ -33,9 +33,10 @@ class Pipeline(Base):
 
     __tablename__ = "pipeline"
     pipeline_id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String, unique=True, nullable=False)
+    name = Column(String, nullable=False)
     repository_uri = Column(String, nullable=False)
     version = Column(String, nullable=False)
+    pipeline_descriptor = UniqueConstraint(name, version, name="pipeline_descriptor")
 
     tasks = relationship("Task", back_populates="pipeline")
 
